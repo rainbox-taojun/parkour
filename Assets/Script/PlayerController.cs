@@ -13,9 +13,9 @@ public class PlayerController : MonoBehaviour
 
 	private void Update()
 	{
-		character.Move();
+		character.Move(); // 角色固定向前移动
 
-		var jump = Input.GetKeyDown(KeyCode.Space);
+		var jump = Input.GetKeyDown(KeyCode.Space); // 跳跃
 		if (jump)
 		{
 			character.Jump();
