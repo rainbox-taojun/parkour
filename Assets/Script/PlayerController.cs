@@ -14,5 +14,11 @@ public class PlayerController : MonoBehaviour
 	private void Update()
 	{
 		character.Move();
+
+		var jump = Input.GetKeyDown(KeyCode.Space);
+		if (jump)
+		{
+			character.Jump();
+		}
 	}
 }
