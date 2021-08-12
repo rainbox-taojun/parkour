@@ -25,6 +25,9 @@ public class PlayerCharacter : MonoBehaviour
 	public AudioClip jumpSound; // 跳跃音效
 	public AudioClip landSound; // 落地音效
 	public AudioClip changeColorSound; // 变色音效
+	public ParticleSystem diePartic;
+	public ParticleSystem water;
+	public ParticleSystem steam;
 
 	int jumpCount = 0; // 跳跃的次数
 	bool onGround; // 是否在地面上
@@ -36,6 +39,10 @@ public class PlayerCharacter : MonoBehaviour
 		rigid = GetComponent<Rigidbody>();
 		render = GetComponentInChildren<Renderer>();
 		animator = GetComponentInChildren<Animator>();
+
+		diePartic.Stop();
+		water.Stop();
+		steam.Play();
 
 		isAlive = true;
 		render.material.color = Color.red;
@@ -128,7 +135,9 @@ public class PlayerCharacter : MonoBehaviour
 		isAlive = false;
 		render.enabled = false;
 		rigid.velocity = Vector3.zero;
-
+		diePartic.Play();
+		water.Stop();
+		steam.Stop();
 		Invoke("Restart", 1);
 	}
 
@@ -142,15 +151,21 @@ public class PlayerCharacter : MonoBehaviour
 	{
 		if (!isAlive) return;
 
+		
+
 		if (colorCurrent == TransColor.Red)
 		{
 			colorCurrent = TransColor.Green;
 			render.material.color = Color.green;
+			water.Play();
+			steam.Stop();
 		}
 		else if (colorCurrent == TransColor.Green)
 		{
 			colorCurrent = TransColor.Red;
 			render.material.color = Color.red;
+			steam.Play();
+			water.Stop();
 		}
 
 		animator.SetTrigger("onChangeColor");//将判断结果写入动画的属性,让他去切换动画
