@@ -4,6 +4,15 @@ using UnityEngine;
 
 public class PlayerCharacter : MonoBehaviour
 {
+	public enum TransColor
+	{
+		Red,
+		Green,
+		Undefine
+	}
+
+	TransColor colorCurrent;
+
 	Rigidbody rigid; // 刚体
 	Renderer render;
 	Animator animator; // 动画
@@ -12,6 +21,10 @@ public class PlayerCharacter : MonoBehaviour
 	public float speed; // 速度
 	public float jumpForce; // 跳跃力度
 	public float doubleJumpForce; // 二段跳力度
+	public bool isAlive; // 角色存活
+	public AudioClip jumpSound; // 跳跃音效
+	public AudioClip landSound; // 落地音效
+	public AudioClip changeColorSound; // 变色音效
 
 	int jumpCount = 0; // 跳跃的次数
 	bool onGround; // 是否在地面上
@@ -19,16 +32,20 @@ public class PlayerCharacter : MonoBehaviour
 
 	private void Awake()
 	{
-    // 初始化
+		// 初始化
 		rigid = GetComponent<Rigidbody>();
 		render = GetComponentInChildren<Renderer>();
 		animator = GetComponentInChildren<Animator>();
+
+		isAlive = true;
+		render.material.color = Color.red;
+		colorCurrent = TransColor.Red;
 	}
 
-  // 判断是否在地面上
+	// 判断是否在地面上
 	public bool GroundCheck()
 	{
-    // 碰撞
+		// 碰撞
 		Collider[] colliders = Physics.OverlapSphere(transform.position, 0.35f);
 
 		for(int i=0;i< colliders.Length;i++)
@@ -42,16 +59,41 @@ public class PlayerCharacter : MonoBehaviour
 		return false;
 	}
 
-	private void Update()
+	// update是根据帧数 而fixedUpdate是根据真实时间 物理判断要放在FixedUpdate
+	private void FixedUpdate()
 	{
-		onGround = GroundCheck();//时刻执行是否在地面判断
+		if (!isAlive) return;
 
+		if (collisionRet != null)
+		{
+			if (collisionRet.gameObject.CompareTag("Red"))
+			{
+				if (colorCurrent != TransColor.Red)
+				{
+					Die();
+				}
+			}
+			else if (collisionRet.gameObject.CompareTag("Green"))
+			{
+				if (colorCurrent != TransColor.Green)
+				{
+					Die();
+				}
+			}
+			else
+			{
+				Die();
+			}
+		}
+		onGround = GroundCheck();//时刻执行是否在地面判断
 		animator.SetBool("onGround", onGround);//将判断结果写入动画的属性,让他去切换动画
 	}
 
+
 	public void Move()
 	{
-    // 角色自动向前移动(z轴)
+		if (!isAlive) return;
+		// 角色自动向前移动(z轴)
 		var vel = rigid.velocity;
 		vel.z = (Vector3.forward * speed).z;
 		rigid.velocity = vel;
@@ -61,6 +103,8 @@ public class PlayerCharacter : MonoBehaviour
   // y方向力归零是为了防止下落的时候抵消了跳跃向上的力。
 	public void Jump()
 	{
+		if (!isAlive) return;
+
 		if (jumpCount < 2)// 判断是否已经跳了两次
 		{
 			if (jumpCount == 0) // 第一次跳
@@ -73,6 +117,7 @@ public class PlayerCharacter : MonoBehaviour
 				rigid.velocity = new Vector3(rigid.velocity.x, 0, rigid.velocity.z);// 将y轴的力归零
 				rigid.AddForce(Vector3.up * doubleJumpForce, ForceMode.Impulse);
 			}
+			AudioSource.PlayClipAtPoint(jumpSound, transform.position);
 			jumpCount++;
 		}
 	}
@@ -80,18 +125,56 @@ public class PlayerCharacter : MonoBehaviour
   // 狗带方法
 	public void Die()
 	{
+		isAlive = false;
+		render.enabled = false;
+		rigid.velocity = Vector3.zero;
 
+		Invoke("Restart", 1);
+	}
+
+	public void Restart()
+	{
+		UnityEngine.SceneManagement.SceneManager.LoadScene("Game");
 	}
 
   // 设置颜色
 	public void ChangeColorState()
 	{
+		if (!isAlive) return;
+
+		if (colorCurrent == TransColor.Red)
+		{
+			colorCurrent = TransColor.Green;
+			render.material.color = Color.green;
+		}
+		else if (colorCurrent == TransColor.Green)
+		{
+			colorCurrent = TransColor.Red;
+			render.material.color = Color.red;
+		}
+
+		animator.SetTrigger("onChangeColor");//将判断结果写入动画的属性,让他去切换动画
+		AudioSource.PlayClipAtPoint(changeColorSound, transform.position);
 
 	}
 
-  // 碰撞事件
+	// 开始碰撞事件
 	private void OnCollisionEnter(Collision collision)
 	{
 		jumpCount = 0; // 跳跃数归零
+		AudioSource.PlayClipAtPoint(landSound, transform.position);
+		collisionRet = collision;
+	}
+
+	// 
+	private void OnCollisionStay(Collision collision)
+	{
+		collisionRet = collision;
+	}
+
+	// 退出碰撞
+	private void OnCollisionExit(Collision collision)
+	{
+		collisionRet = null;
 	}
 }

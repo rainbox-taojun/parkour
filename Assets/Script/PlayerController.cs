@@ -13,12 +13,12 @@ public class PlayerController : MonoBehaviour
 
 	private void Update()
 	{
+		if (!character.isAlive) return;
 		character.Move(); // 角色固定向前移动
 
 		var jump = Input.GetKeyDown(KeyCode.Space); // 跳跃
-		if (jump)
-		{
-			character.Jump();
-		}
+		var changeColor = Input.GetKeyDown(KeyCode.UpArrow);
+		if (jump) character.Jump();
+		if (changeColor) character.ChangeColorState();
 	}
 }
