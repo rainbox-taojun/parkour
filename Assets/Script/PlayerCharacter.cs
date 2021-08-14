@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class PlayerCharacter : MonoBehaviour
 {
+	PlayerController controller;
 	public enum TransColor
 	{
 		Red,
@@ -36,10 +37,19 @@ public class PlayerCharacter : MonoBehaviour
 	private void Awake()
 	{
 		// 初始化
+		controller = FindObjectOfType<PlayerController>();
+
 		rigid = GetComponent<Rigidbody>();
 		render = GetComponentInChildren<Renderer>();
 		animator = GetComponentInChildren<Animator>();
 
+		diePartic.Stop();
+		water.Stop();
+		steam.Stop();
+	}
+
+	public void InitCharacter()
+	{
 		diePartic.Stop();
 		water.Stop();
 		steam.Play();
@@ -138,12 +148,7 @@ public class PlayerCharacter : MonoBehaviour
 		diePartic.Play();
 		water.Stop();
 		steam.Stop();
-		Invoke("Restart", 1);
-	}
-
-	public void Restart()
-	{
-		UnityEngine.SceneManagement.SceneManager.LoadScene("Game");
+		controller.ShowGameOverPanel();
 	}
 
   // 设置颜色
